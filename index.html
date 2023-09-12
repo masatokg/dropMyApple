@@ -1,0 +1,180 @@
+<html>
+    <head>
+        <title>Game</title>
+        <meta charset="utf-8"/>
+        <!-- <script src="pixi.min.js"></script> -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js" integrity="sha512-Ch/O6kL8BqUwAfCF7Ie5SX1Hin+BJgYH4pNjRqXdTEqMsis1TUYg+j6nnI9uduPjGaj7DN4UKCZgpvoExt6dkw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>    </head>
+    <body>
+        <div>
+            <button id="playStart">ゲームスタート</button>
+            <button id="playStop">ゲームストップ</button>
+        </div>
+        <div>
+            <button id="toggleBGM">BGMを再生/停止</button>
+            <input id="volumeControl" type="range" min="0" max="1" step="0.1" value="0.5">
+        </div>
+    </body>
+    <script>
+        const getAppleSound = new Audio('shot1.mp3');
+        getAppleSound.volume = 0.5;
+        // BGMの再生
+        const bgm = new Audio('osanpo.mp3');
+        bgm.loop = true;
+        let isBGMPlaying = false;
+        
+
+        document.getElementById('toggleBGM').addEventListener('click', () => {
+            if (isBGMPlaying) {
+                bgm.pause();
+                isBGMPlaying = false;
+            } else {
+                bgm.play();
+                isBGMPlaying = true;
+                // bgm.volume = event.target.value;
+            }
+        });
+        document.getElementById('volumeControl').addEventListener('input', (event) => {
+            bgm.volume = event.target.value;
+        });
+        // ゲームスタートボタン
+        document.getElementById('playStart').addEventListener('click', () => {
+            count_up = 0;//★カウント初期化
+            score.text = "得点:" + count_up;//★スコアパーツに代入            
+            app.ticker.add(loop_animation);
+            bgm.play();
+            isBGMPlaying = true;
+        });
+        // ゲームストップボタン
+        document.getElementById('playStop').addEventListener('click', () => {
+            app.ticker.remove(loop_animation);
+                bgm.pause();
+                isBGMPlaying = false;
+            });
+
+    // PIXIアプリを作成
+        const app = new PIXI.Application({
+        width: 480,//画面幅480px
+        height: 500,//画面高640px
+        backgroundColor: 0x1099bb,//背景の色。水色
+        });
+        document.body.appendChild(app.view);//<body>に追加します。
+        //かご
+        const basket = PIXI.Sprite.from('basket.png');//画像
+        basket.width = 64;//幅
+        basket.height = 34;//高さ
+        basket.x = 96;//x座標
+        basket.y = app.view.height - basket.height -100;//y座標
+        basket.anchor.set(0.5);//中心点。０が左端、０．５が中央、１が右端
+        // app.stage.addChild(basket); 位置を移動
+            //カゴの操作
+        document.addEventListener('keydown',
+            function (key){
+                // 左キー
+                if (key.keyCode === 65 || key.keyCode === 37) {
+                    if ( (basket.position.x - ( basket.width / 2 )) > 96) {
+                        basket.position.x -= 96;
+                    }
+                }
+                // 右キー
+                if (key.keyCode === 68 || key.keyCode === 39) {
+                    if ( (basket.position.x + ( basket.width / 2 )) < 384 ) {
+                        basket.position.x += 96;
+                    }
+                }
+            }
+        );
+        // リンゴの水平位置
+        const xpos1 = 96;
+        const xpos2 = (xpos1*2);
+        const xpos3 = (xpos1*3);
+        const xpos4 = (xpos1*4);
+        const x_positions = [xpos1, xpos2, xpos3, xpos4];
+        // y位置
+        const ypos1 = -96;
+        const ypos2 = (ypos1*2);
+        const ypos3 = (ypos1*3);
+        const ypos4 = (ypos1*4);
+        const y_positions = [ypos1, ypos2, ypos3, ypos4];
+        //リンゴを追加
+        x_positions.forEach(function(xpos){ //水平位置の設定を１つずつ処理する
+            let apple = PIXI.Sprite.from('apple.png');//リンゴの画像を変数に入れる
+            apple.anchor.set(0.5);//基準点は中央にする
+            apple.scale.set(2);//2倍の大きさにする
+            apple.x = xpos;//水平位置
+            apple.y = 0;//垂直位置
+
+            //★配列からランダムにｙ位置を取得
+            random = Math.floor( Math.random() * y_positions.length );//★
+            apple.y = y_positions[random];//★垂直位置
+
+            app.stage.addChild(apple);//画面に追加する
+        });
+        app.stage.addChild(basket);//★ここに移動
+
+        // 得点
+        const score = new PIXI.Text("得点:0");//変数に格納
+        score.position.set(12, 12);//表示位置
+        app.stage.addChild(score);//画面に追加
+
+        // ループ処理の実装
+        let count_up = 0;//★得点をカウントアップする変数を宣言
+        // app.ticker.add(function(){
+        //     //Pixiアプリの子要素に対する処理
+        //     app.stage.children.forEach(element => {
+        //         //★カゴとスコア以外の場合、落下処理を実施する
+        //         if(basket != element && score != element){//★
+        //             element.y = element.y + 1;//落下移動
+        //             //リンゴのｙ位置が画面を超えた場合、新しいｙ位置を設定する
+        //             if(element.y > app.view.scrollHeight){
+        //                 //配列からランダムにｙ位置を取得
+        //                 random = Math.floor( Math.random() * y_positions.length );
+        //                 element.y = y_positions[random];//垂直位置にランダム値を設定
+        //             }
+        //             //リンゴとプレイヤーの位置が一致した場合、新しいｙ位置を設定する
+        //             if(element.x == basket.x && element.y == basket.y){
+        //                 //配列からランダムにｙ位置を取得
+        //                 random = Math.floor( Math.random() * y_positions.length );
+        //                 element.y = y_positions[random];//垂直位置にランダム値を設定
+        //                 //★得点を１つアップ
+        //                 count_up = count_up + 1;//★カウントアップ
+        //                 score.text = "得点:" + count_up;//★スコアパーツに代入
+        //                 getAppleSound.play();//★音を鳴らす
+        //             }
+        //         }
+        //     });
+        // });
+
+        // app.ticker.add(
+        function loop_animation(delta){
+            //Pixiアプリの子要素に対する処理
+            app.stage.children.forEach(element => {
+                //★カゴとスコア以外の場合、落下処理を実施する
+                if(basket != element && score != element){//★
+                    element.y = element.y + 1;//落下移動
+                    //リンゴのｙ位置が画面を超えた場合、新しいｙ位置を設定する
+                    if(element.y > app.view.scrollHeight){
+                        //配列からランダムにｙ位置を取得
+                        random = Math.floor( Math.random() * y_positions.length );
+                        element.y = y_positions[random];//垂直位置にランダム値を設定
+                    }
+                    //リンゴとプレイヤーの位置が一致した場合、新しいｙ位置を設定する
+                    if(element.x == basket.x && element.y == basket.y){
+                        //配列からランダムにｙ位置を取得
+                        random = Math.floor( Math.random() * y_positions.length );
+                        element.y = y_positions[random];//垂直位置にランダム値を設定
+                        //★得点を１つアップ
+                        count_up = count_up + 1;//★カウントアップ
+                        score.text = "得点:" + count_up;//★スコアパーツに代入
+                        getAppleSound.play();//★音を鳴らす
+                    }
+                }
+            });
+        }
+        // app.ticker.add(loop_animation);
+        // );
+
+
+
+
+</script>
+</html>
